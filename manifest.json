@@ -1,0 +1,21 @@
+{
+  "name": "ماجراجویی فندقی و بلوط‌ها",
+  "short_name": "فندقی",
+  "description": "به فندقی کمک کن بلوط‌ها رو بشماره!",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#87CEEB",
+  "theme_color": "#87CEEB",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ماجراجویی فندقی و بلوط‌ها</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#87CEEB"/>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="فندقی">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <meta name="msapplication-TileImage" content="icon-192x192.png">
+    <meta name="msapplication-TileColor" content="#87CEEB">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #a2d2ff 100%);
+            touch-action: none; /* Prevents default touch behaviors like scrolling */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
+        }
+        .speech-bubble {
+            position: relative;
+            background: #ffffff;
+            border-radius: .4em;
+            padding: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border: 20px solid transparent;
+            border-top-color: #ffffff;
+            border-bottom: 0;
+            border-left: 0;
+            margin-left: -10px;
+            margin-bottom: -20px;
+        }
+        /* --- تغییر: استایل جدید برای بلوط (تصویر) --- */
+        .acorn {
+            /* font-size: 3rem; */ /* حذف می‌شود چون دیگر ایموجی نیست */
+            width: 60px; /* اندازه تصویر بلوط */
+            height: 60px; /* اندازه تصویر بلوط */
+            cursor: grab;
+            transition: transform 0.2s ease-in-out;
+            /* text-shadow: 2px 2px 4px rgba(0,0,0,0.2); */ /* حذف می‌شود */
+            background-image: url('acorn.png'); /* اضافه شده */
+            background-size: contain; /* اضافه شده */
+            background-repeat: no-repeat; /* اضافه شده */
+            background-position: center; /* اضافه شده */
+        }
+        .dragging {
+            cursor: grabbing;
+            transform: scale(1.2);
+            z-index: 100;
+            transition: none; /* Remove transition while dragging */
+        }
+        .basket {
+            font-size: 6rem; /* Make basket emoji large */
+            transition: transform 0.2s ease-in-out;
+            position: relative; /* Needed for positioning acorns inside */
+        }
+        .basket-hover {
+            transform: scale(1.15);
+        }
+        /* New rule to make only the basket emoji transparent */
+        .basket > span:first-child {
+            opacity: 0.65;
+        }
+        .grass {
+            background: linear-gradient(180deg, #8BC34A 0%, #689F38 100%);
+        }
+        .fandoqi-happy {
+            animation: bounce 0.8s ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        .star-burst {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 10;
+        }
+        .star {
+            position: absolute; width: 20px; height: 20px; background: yellow;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            animation: pop 0.6s ease-out forwards;
+        }
+        @keyframes pop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        /* --- اضافه شده: استایل برای درخت در صفحه بازی (گوشه بالا چپ و کوچک) --- */
+        #game-screen .oak-tree-game {
+            position: absolute;
+            top: 20px; /* فاصله از بالا */
+            left: 20px; /* فاصله از چپ */
+            width: 80px; /* اندازه کوچک‌تر */
+            height: 80px; /* اندازه کوچک‌تر */
+            background-image: url('oak-tree.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 5; /* پایین‌تر از بلوط‌ها و سنجاب، بالاتر از پس‌زمینه */
+        }
+        /* --- اضافه شده: استایل برای درخت در صفحه شروع (وسط و زیر دکمه‌ها) --- */
+        .oak-tree-start {
+            width: 150px; /* اندازه مناسب برای صفحه شروع */
+            height: 150px; /* اندازه مناسب برای صفحه شروع */
+            background-image: url('oak-tree.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            /* margin-top: 2rem; */ /* حذف شد */
+        }
+        /* --- اضافه شده: استایل برای سنجاب (تصویر) --- */
+        .squirrel-image {
+            width: 100px; /* اندازه تصویر سنجاب */
+            height: 100px; /* اندازه تصویر سنجاب */
+            background-image: url('squirrel.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="overflow-hidden antialiased">
+    <div id="start-screen" class="w-screen h-screen flex flex-col items-center justify-center p-4 text-center">
+        <h1 class="text-4xl md:text-6xl font-bold text-white" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">ماجراجویی فندقی و بلوط‌ها</h1>
+        <p class="text-xl md:text-2xl mt-4 text-white">به فندقی کمک کن بلوط‌ها رو بشماره!</p>
+        <!-- تغییر: ایجاد یک div والد برای دکمه‌ها و درخت -->
+        <div class="mt-12 flex flex-col items-center">
+            <div class="flex flex-col md:flex-row gap-4">
+                <button onclick="startGame(10)" class="px-8 py-4 bg-green-500 text-white font-bold rounded-xl text-2xl shadow-lg transform hover:scale-105 transition-transform active:scale-95">
+                    ساده (تا ۱۰)
+                </button>
+                <button onclick="startGame(20)" class="px-8 py-4 bg-blue-500 text-white font-bold rounded-xl text-2xl shadow-lg transform hover:scale-105 transition-transform active:scale-95">
+                    پیشرفته (تا ۲۰)
+                </button>
+            </div>
+            <!-- تغییر: نمایش درخت درست زیر دکمه‌ها و تراز -->
+            <div class="oak-tree-start mt-4"></div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="w-screen h-screen hidden flex-col transition-opacity duration-500">
+        <!-- --- اضافه شده: نمایش درخت در صفحه بازی --->
+        <div class="oak-tree-game"></div>
+
+        <!-- Top Bar with Back Button -->
+        <div class="absolute top-4 right-4 z-20">
+            <button onclick="goHome()" class="text-4xl transform hover:scale-110 transition-transform active:scale-95">🏠</button>
+        </div>
+        
+        <!-- Sky & Character Area -->
+        <div class="flex-grow w-full relative flex items-center justify-center flex-col pt-16">
+            <div id="fandoqi-container" class="transition-transform duration-500">
+                <!-- --- تغییر: نمایش تصویر سنجاب --->
+                <div id="fandoqi-emoji" class="squirrel-image"></div>
+            </div>
+            <div class="flex flex-col items-center mt-4">
+                <div class="speech-bubble w-64 text-center">
+                    <p class="text-lg text-gray-700">من به <span id="target-number-text" class="font-bold text-3xl text-orange-500">...</span> تا بلوط نیاز دارم!</p>
+                </div>
+                <div class="mt-8 bg-white/70 backdrop-blur-sm rounded-xl px-6 py-3 shadow-lg">
+                    <span class="text-5xl font-bold text-gray-800"><span id="current-count-text">۰</span> / <span id="target-number-text-2">...</span></span>
+                </div>
+            </div>
+            <div class="star-burst" id="star-container"></div>
+        </div>
+
+        <!-- Grass & Interaction Area -->
+        <div class="w-full h-2/5 grass border-t-8 border-green-800 flex flex-row">
+            <!-- Basket Area (appears on the right in RTL) -->
+            <div class="w-1/4 md:w-1/5 h-full flex items-center justify-center border-l-4 border-dashed border-green-900/50 bg-green-700/20">
+                <div id="basket" class="basket z-10">🧺</div>
+            </div>
+            <!-- Acorns Spawning Area (appears on the left in RTL) -->
+            <div id="acorns-container" class="flex-grow h-full relative"></div>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="success-modal" class="hidden absolute inset-0 bg-black/50 flex-col items-center justify-center z-50">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl text-center transform scale-0 transition-transform duration-300">
+                <h2 class="text-5xl font-bold text-yellow-500">آفرین!</h2>
+                <p class="text-2xl mt-4 text-gray-700">تو موفق شدی!</p>
+                <button onclick="generateNewRound()" class="mt-8 px-10 py-4 bg-green-500 text-white font-bold rounded-xl text-2xl shadow-lg transform hover:scale-105 transition-transform active:scale-95">
+                    بازی جدید
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="success-sound" src="./success-sound.mp3" preload="auto"></audio>
+
+    <script>
+        // DOM Elements
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const fandoqiContainer = document.getElementById('fandoqi-container');
+        const fandoqiEmoji = document.getElementById('fandoqi-emoji');
+        const targetNumberText = document.getElementById('target-number-text');
+        const targetNumberText2 = document.getElementById('target-number-text-2');
+        const currentCountText = document.getElementById('current-count-text');
+        const basket = document.getElementById('basket');
+        const acornsContainer = document.getElementById('acorns-container');
+        const successModal = document.getElementById('success-modal');
+        const successModalContent = successModal.querySelector('div');
+        const starContainer = document.getElementById('star-container');
+        const successSound = document.getElementById('success-sound');
+
+        // Game State
+        let maxNumber = 10;
+        let targetNumber = 0;
+        let currentCount = 0;
+        let draggedAcorn = null;
+
+        // --- Persian Digits Converter ---
+        function toPersianDigits(n) {
+            const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            return n.toString().replace(/\d/g, x => persianDigits[x]);
+        }
+
+        // --- Audio ---
+        let audioCtx;
+        function playPopSound() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- Game Flow ---
+        function goHome() {
+            gameScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
+        function startGame(level) {
+            maxNumber = level;
+            startScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            gameScreen.classList.add('flex');
+            generateNewRound();
+        }
+
+        function generateNewRound() {
+            currentCount = 0;
+            targetNumber = Math.floor(Math.random() * maxNumber) + 1;
+            
+            updateCounters();
+            acornsContainer.innerHTML = '';
+            updateBasketVisual(); // Reset basket visual
+            createAcorns();
+            
+            successModal.classList.add('hidden');
+            successModalContent.classList.add('scale-0');
+            fandoqiEmoji.classList.remove('fandoqi-happy');
+        }
+
+        function updateCounters() {
+            targetNumberText.textContent = toPersianDigits(targetNumber);
+            targetNumberText2.textContent = toPersianDigits(targetNumber);
+            currentCountText.textContent = toPersianDigits(currentCount);
+        }
+
+        function updateBasketVisual() {
+            const baseEmoji = '<span class="relative z-10">🧺</span>';
+            let acornsHTML = '';
+            
+            // We'll limit the visual acorns to 12 to prevent overcrowding.
+            const visualAcornCount = Math.min(currentCount, 12); 
+
+            for (let i = 0; i < visualAcornCount; i++) {
+                // --- New Stacking Logic ---
+                // This logic stacks acorns in natural-looking rows from the top of the basket.
+
+                // Determine the row based on the acorn index (e.g., 4 acorns per row)
+                const row = Math.floor(i / 4); 
+                // Determine the position within the row
+                const col = i % 4;
+
+                // Base vertical position on the row, so they stack up from the top-middle
+                // Increased the base from 50 to 65 to make acorns peek out from the top.
+                const bottomBase = 65 - (row * 15); 
+                
+                // Add some random jitter to make it look natural
+                const randomBottom = bottomBase + (Math.random() * 6 - 3); // small vertical jitter
+                const randomRight = 30 + col * 12 + (Math.random() * 6 - 3); // Horizontal position based on column + jitter
+                const randomRotate = -20 + Math.random() * 40; 
+                
+                // --- تغییر: استفاده از تصویر بلوط در سبد ---
+                acornsHTML += `<div class="absolute opacity-95 z-0" style="bottom: ${randomBottom}px; right: ${randomRight}px; transform: rotate(${randomRotate}deg); width: 30px; height: 30px; background-image: url('acorn.png'); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>`;
+            }
+            
+            basket.innerHTML = baseEmoji + acornsHTML;
+        }
+
+        // --- Acorn Creation & Interaction ---
+        function createAcorns() {
+            const numAcorns = maxNumber + 5;
+            for (let i = 0; i < numAcorns; i++) {
+                const acorn = document.createElement('div');
+                // --- تغییر: استفاده از تصویر بلوط به جای ایموجی ---
+                // acorn.innerHTML = '🌰';
+                acorn.className = 'acorn absolute'; // کلاس .acorn شامل استایل تصویر است
+                
+                const randomX = Math.random() * (acornsContainer.offsetWidth - 60);
+                const randomY = Math.random() * (acornsContainer.offsetHeight - 60);
+                acorn.style.left = `${randomX}px`;
+                acorn.style.top = `${randomY}px`;
+                
+                acorn.setAttribute('draggable', true);
+                acorn.addEventListener('mousedown', handleDragStart);
+                acorn.addEventListener('touchstart', handleDragStart, { passive: false });
+                acornsContainer.appendChild(acorn);
+            }
+        }
+
+        // --- Universal Drag Logic ---
+        function handleDragStart(e) {
+            e.preventDefault();
+            draggedAcorn = e.target;
+            draggedAcorn.classList.add('dragging');
+
+            const moveHandler = e.type === 'mousedown' ? handleMouseMove : handleTouchMove;
+            const endHandler = e.type === 'mousedown' ? handleMouseUp : handleTouchEnd;
+            
+            document.addEventListener(moveHandler.name.slice(6).toLowerCase(), moveHandler);
+            document.addEventListener(endHandler.name.slice(6).toLowerCase(), endHandler, { once: true });
+        }
+
+        function handleMouseMove(e) {
+            moveElement(e.clientX, e.clientY);
+        }
+        function handleTouchMove(e) {
+            moveElement(e.touches[0].clientX, e.touches[0].clientY);
+        }
+
+        function moveElement(x, y) {
+            if (!draggedAcorn) return;
+            const rect = acornsContainer.getBoundingClientRect();
+            draggedAcorn.style.left = `${x - rect.left - draggedAcorn.offsetWidth / 2}px`;
+            draggedAcorn.style.top = `${y - rect.top - draggedAcorn.offsetHeight / 2}px`;
+
+            if (isOverBasket(draggedAcorn)) {
+                basket.classList.add('basket-hover');
+            } else {
+                basket.classList.remove('basket-hover');
+            }
+        }
+
+        function handleMouseUp(e) {
+            handleDragEnd(e);
+            document.removeEventListener('mousemove', handleMouseMove);
+        }
+        function handleTouchEnd(e) {
+            handleDragEnd(e);
+            document.removeEventListener('touchmove', handleTouchMove);
+        }
+
+        function handleDragEnd(e) {
+            if (!draggedAcorn) return;
+
+            if (isOverBasket(draggedAcorn)) {
+                handleAcornDrop(draggedAcorn);
+            }
+            
+            draggedAcorn.classList.remove('dragging');
+            basket.classList.remove('basket-hover');
+            draggedAcorn = null;
+        }
+
+        function isOverBasket(element) {
+            const basketRect = basket.getBoundingClientRect();
+            const elRect = element.getBoundingClientRect();
+            return !(elRect.right < basketRect.left || 
+                     elRect.left > basketRect.right || 
+                     elRect.bottom < basketRect.top || 
+                     elRect.top > basketRect.bottom);
+        }
+
+        // --- Shared Drop Logic ---
+        function handleAcornDrop(acornElement) {
+            if (currentCount < targetNumber) {
+                playPopSound();
+                currentCount++;
+                updateCounters();
+                updateBasketVisual(); // Update basket on drop
+                acornElement.remove();
+
+                if (currentCount === targetNumber) {
+                    handleWin();
+                }
+            } else {
+                 basket.animate([
+                    { transform: 'scale(1.15) translateX(0)' },
+                    { transform: 'scale(1.15) translateX(-10px)' },
+                    { transform: 'scale(1.15) translateX(10px)' },
+                    { transform: 'scale(1.15) translateX(0)' }
+                ], { duration: 300, iterations: 1 });
+            }
+        }
+
+        function handleWin() {
+            if(successSound) successSound.play();
+            fandoqiEmoji.classList.add('fandoqi-happy');
+            createStars();
+            setTimeout(() => {
+                successModal.classList.remove('hidden');
+                successModal.classList.add('flex');
+                setTimeout(() => successModalContent.classList.remove('scale-0'), 50);
+            }, 500);
+        }
+
+        function createStars() {
+            starContainer.innerHTML = '';
+            for(let i = 0; i < 15; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 0.5}s`;
+                starContainer.appendChild(star);
+            }
+            setTimeout(() => starContainer.innerHTML = '', 1200);
+        }
+
+        // --- PWA: Register Service Worker ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+    </script>
+</body>
+</html>
